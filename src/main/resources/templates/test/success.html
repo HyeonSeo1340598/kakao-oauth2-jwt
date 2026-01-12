@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <title>Success</title>
+</head>
+<body>
+<h2>로그인 완료</h2>
+
+<p><button id="callMe">/api/me 호출</button></p>
+<p><button id="clear">토큰 삭제</button></p>
+
+<h3>LocalStorage</h3>
+<pre id="storage"></pre>
+
+<h3>/api/me 결과</h3>
+<pre id="me"></pre>
+
+<script>
+    function renderStorage() {
+      const token = localStorage.getItem("accessToken");
+      const role = localStorage.getItem("role");
+      document.getElementById("storage").innerText =
+        JSON.stringify({role, tokenPreview: token ? token.slice(0, 30) + "..." : null}, null, 2);
+    }
+    renderStorage();
+
+    document.getElementById("callMe").addEventListener("click", async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch("/api/me", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const text = await res.text();
+      document.getElementById("me").innerText = text;
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("role");
+      localStorage.removeItem("signupTicket");
+      renderStorage();
+    });
+</script>
+</body>
+</html>

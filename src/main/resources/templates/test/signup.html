@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <title>Signup</title>
+</head>
+<body>
+<h2>회원가입(티켓 기반)</h2>
+
+<div id="info"></div>
+
+<form id="signupForm">
+    <input type="hidden" id="ticket" name="ticket"/>
+
+    <div>
+        <label>이름</label>
+        <input type="text" id="name" required/>
+    </div>
+
+    <div>
+        <label>생년월일</label>
+        <input type="date" id="birth" required/>
+    </div>
+
+    <div>
+        <label>성별</label>
+        <select id="gender" required>
+            <option value="MALE">MALE</option>
+            <option value="FEMALE">FEMALE</option>
+        </select>
+    </div>
+
+    <div>
+        <label>전화번호</label>
+        <input type="text" id="phoneNumber" placeholder="01012345678" required/>
+    </div>
+
+    <div id="pinBox" style="display:none;">
+        <label>PIN(고객만)</label>
+        <input type="number" id="pin" min="0" />
+    </div>
+
+    <button type="submit">회원가입 완료</button>
+</form>
+
+<pre id="result"></pre>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    const ticket = params.get("ticket") || localStorage.getItem("signupTicket");
+    const role = params.get("role") || localStorage.getItem("role");
+
+    document.getElementById("ticket").value = ticket ?? "";
+    document.getElementById("info").innerText = `role=${role}, ticket=${ticket}`;
+
+    const pinBox = document.getElementById("pinBox");
+    if (role === "CUSTOMER") pinBox.style.display = "block";
+
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const body = {
+        ticket,
+        name: document.getElementById("name").value,
+        birth: document.getElementById("birth").value,
+        gender: document.getElementById("gender").value,
+        phoneNumber: document.getElementById("phoneNumber").value
+      };
+
+      let url;
+      if (role === "CUSTOMER") {
+        url = "/api/signup/customer";
+        body.pin = Number(document.getElementById("pin").value);
+      } else {
+        url = "/api/signup/owner";
+      }
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+
+      if (data.status === "SUCCESS") {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("role", data.role);
+        location.href = "/test/success";
+      }
+    });
+</script>
+</body>
+</html>
