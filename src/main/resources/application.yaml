@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: kakao-oauth2-jwt
