@@ -60,6 +60,12 @@ public class OAuth2JsonSuccessHandler implements AuthenticationSuccessHandler {
             OAuth2User user = token.getPrincipal();
             String providerId = user.getName(); // 카카오 id (user-name-attribute=id 설정)
 
+            // 동의항목에서 받은 프로필 정보 추출
+            Map<String, Object> attrs = user.getAttributes();
+            String nickname = getKakaoNickname(attrs);
+            String thumbnailUrl = getKakaoThumbnailImageUrl(attrs);
+            String profileUrl = getKakaoProfileImageUrl(attrs);
+
             AuthProvider providerType = AuthProvider.KAKAO; // 지금은 카카오만 붙이니까 고정
 
             if (role == UserRole.CUSTOMER) {
@@ -67,30 +73,28 @@ public class OAuth2JsonSuccessHandler implements AuthenticationSuccessHandler {
                 var existing = customerRepository.findByProviderTypeAndProviderId(providerType, providerId);
                 if (existing.isPresent()) { // 있으면 → JWT 발급해서 SUCCESS 응답
                     long userId = existing.get().getCustomerId();
-                    respondLoginSuccess(response, userId, role);
 
                     if (wantsHtml) { // test
-                        String subject = String.valueOf(userId);
-                        String accessToken = accessTokenService.issueAccessToken(subject, role);
-                        redirectToSuccessPage(response, accessToken, role);
+                        String accessToken = issueTokensAndSetCookie(response, userId, role);
+                        redirectToSuccessPage(response, accessToken, role, nickname, thumbnailUrl, profileUrl);
                         return;
                     } // test
 
+                    respondLoginSuccess(response, userId, role);
                     return;
                 }
             } else {
                 var existing = ownerRepository.findByProviderTypeAndProviderId(providerType, providerId);
                 if (existing.isPresent()) {
                     long userId = existing.get().getOwnerId();
-                    respondLoginSuccess(response, userId, role);
 
                     if (wantsHtml) { // test
-                        String subject = String.valueOf(userId);
-                        String accessToken = accessTokenService.issueAccessToken(subject, role);
-                        redirectToSuccessPage(response, accessToken, role);
+                        String accessToken = issueTokensAndSetCookie(response, userId, role);
+                        redirectToSuccessPage(response, accessToken, role, nickname, thumbnailUrl, profileUrl);
                         return;
                     } // test
 
+                    respondLoginSuccess(response, userId, role);
                     return;
                 }
             }
@@ -162,6 +166,38 @@ public class OAuth2JsonSuccessHandler implements AuthenticationSuccessHandler {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
+    @SuppressWarnings("unchecked")
+    private static Map<?, ?> getKakaoProfile(Map<String, Object> attrs) {
+        Object kakaoAccountObj = attrs.get("kakao_account");
+        if (!(kakaoAccountObj instanceof Map<?, ?> kakaoAccount)) return null;
+
+        Object profileObj = kakaoAccount.get("profile");
+        if (!(profileObj instanceof Map<?, ?> profile)) return null;
+
+        return profile;
+    }
+
+    private static String getKakaoNickname(Map<String, Object> attrs) {
+        Map<?, ?> profile = getKakaoProfile(attrs);
+        if (profile == null) return null;
+        Object v = profile.get("nickname");
+        return v != null ? String.valueOf(v) : null;
+    }
+
+    private static String getKakaoThumbnailImageUrl(Map<String, Object> attrs) {
+        Map<?, ?> profile = getKakaoProfile(attrs);
+        if (profile == null) return null;
+        Object v = profile.get("thumbnail_image_url");
+        return v != null ? String.valueOf(v) : null;
+    }
+
+    private static String getKakaoProfileImageUrl(Map<String, Object> attrs) {
+        Map<?, ?> profile = getKakaoProfile(attrs);
+        if (profile == null) return null;
+        Object v = profile.get("profile_image_url");
+        return v != null ? String.valueOf(v) : null;
+    }
+
     // test
     private boolean isBrowser(HttpServletRequest request) {
         String accept = request.getHeader("Accept");
@@ -169,16 +205,47 @@ public class OAuth2JsonSuccessHandler implements AuthenticationSuccessHandler {
     }
 
     // test
-    private void redirectToSuccessPage(HttpServletResponse response, String jwt, UserRole role) throws Exception {
-        // 토큰을 URL fragment(#)에 넣으면 서버 로그/쿼리로 안 넘어가서 테스트에 비교적 안전함
-        String fragment = "#accessToken=" + url(jwt) + "&role=" + url(role.name());
+    private void redirectToSuccessPage(
+            HttpServletResponse response,
+            String jwt,
+            UserRole role,
+            String nickname,
+            String thumbnailUrl,
+            String profileUrl
+    ) throws Exception {
+        String fragment =
+                "#accessToken=" + url(jwt) +
+                        "&role=" + url(role.name()) +
+                        "&nickname=" + url(nullToEmpty(nickname)) +
+                        "&thumbnailUrl=" + url(nullToEmpty(thumbnailUrl)) +
+                        "&profileUrl=" + url(nullToEmpty(profileUrl));
+
         response.sendRedirect("/test/success" + fragment);
+    }
+
+    // test
+    private String nullToEmpty(String s) {
+        return s == null ? "" : s;
     }
 
     // test
     private String url(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
+
+    // test
+    private String issueTokensAndSetCookie(HttpServletResponse response, long userId, UserRole role) {
+        String subject = String.valueOf(userId);
+
+        String accessToken = accessTokenService.issueAccessToken(subject, role);
+
+        var issued = refreshTokenService.issueSingleSession(userId, role);
+        setRefreshCookie(response, issued.token(), issued.ttlSeconds());
+
+        return accessToken;
+    }
+
+
 
 }
 /*
