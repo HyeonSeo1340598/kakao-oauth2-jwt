@@ -1,6 +1,6 @@
 package io.github.hyeonseo.auth.signup.dto;
 
-import io.github.hyeonseo.auth.Gender;
+import io.github.hyeonseo.auth.common.types.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

@@ -32,7 +32,10 @@ app:
     jwt:
       issuer: kakao-oauth2-jwt
       access-ttl-seconds: 900   # 15분
+      refresh-ttl-seconds: 1209600 # 14일 (14 * 24 * 60 * 60)
       cookie-name: ACCESS_TOKEN
       cookie-secure: false      # 로컬은 false, 운영(HTTPS)은 true
       cookie-same-site: Lax     # 로컬 테스트에 적당
     redirect-after-login: /test # 카카오 로그인 성공 후, 서버가 어디로 보내줄지
+  kakao:
+    logout-redirect-uri: "http://localhost:8080/test/logout-complete" # 카카로 로그아웃 후, 서버가 어디로 보내줄지

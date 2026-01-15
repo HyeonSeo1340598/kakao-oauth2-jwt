@@ -16,12 +16,38 @@
 <h3>/api/me 결과</h3>
 <pre id="me"></pre>
 
+<p><button id="kakaoLogout">카카오 로그아웃</button></p>
+
 <script>
+    // 1) OAuth2 성공 리다이렉트에서 넘어온 fragment(#accessToken=...&role=...) 저장
+    const hash = location.hash ? location.hash.substring(1) : "";
+    if (hash) {
+      const hp = new URLSearchParams(hash);
+      const accessToken = hp.get("accessToken");
+      const role = hp.get("role");
+
+      if (accessToken) localStorage.setItem("accessToken", accessToken);
+      if (role) localStorage.setItem("role", role);
+
+      // 2) 주소창에서 fragment 제거(깔끔 + 재로드 시 중복 방지)
+      history.replaceState(null, "", location.pathname);
+    }
+
+    function clearLocal() {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("role");
+      localStorage.removeItem("signupTicket");
+    }
+
     function renderStorage() {
       const token = localStorage.getItem("accessToken");
       const role = localStorage.getItem("role");
       document.getElementById("storage").innerText =
-        JSON.stringify({role, tokenPreview: token ? token.slice(0, 30) + "..." : null}, null, 2);
+        JSON.stringify(
+          { role, tokenPreview: token ? token.slice(0, 30) + "..." : null },
+          null,
+          2
+        );
     }
     renderStorage();
 
@@ -34,12 +60,18 @@
       document.getElementById("me").innerText = text;
     });
 
+    // clear는 한 번만 등록
     document.getElementById("clear").addEventListener("click", () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("signupTicket");
+      clearLocal();
       renderStorage();
     });
+
+    // 카카오 로그아웃: 로컬 삭제 후 서버 로그아웃 엔드포인트로 이동
+    document.getElementById("kakaoLogout").addEventListener("click", () => {
+      clearLocal();
+      location.href = "/auth/logout/kakao";
+    });
 </script>
+
 </body>
 </html>

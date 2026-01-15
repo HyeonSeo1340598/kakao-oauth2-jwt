@@ -23,4 +23,9 @@ public class TestPageController {
         return "test/success";
     }
 
+    @GetMapping("/logout-complete")
+    public String logoutComplete() {
+        return "test/logout-complete";
+    }
+
 }

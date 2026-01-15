@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <title>Logout Complete</title>
+</head>
+<body>
+<h2>로그아웃 완료</h2>
+<p>카카오 로그아웃 + 로컬 토큰 삭제가 완료되었습니다.</p>
+
+<p><a href="/test">테스트 첫 화면으로</a></p>
+
+<script>
+    // 혹시 잔여 토큰이 남아있을 수 있으니 한 번 더 클리어 (안전)
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("role");
+    localStorage.removeItem("signupTicket");
+</script>
+</body>
+</html>

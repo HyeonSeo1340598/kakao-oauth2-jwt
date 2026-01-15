@@ -1,7 +1,7 @@
-package io.github.hyeonseo.auth.signup;
+package io.github.hyeonseo.auth.signup.ticket;
 
-import io.github.hyeonseo.auth.AuthProvider;
-import io.github.hyeonseo.auth.UserRole;
+import io.github.hyeonseo.auth.common.types.AuthProvider;
+import io.github.hyeonseo.auth.common.types.UserRole;
 
 import java.time.Instant;
 
@@ -10,14 +10,12 @@ public class SignupTicketPayloadFactory {
     public static SignupTicketPayload payload(
             UserRole role,
             AuthProvider providerType,
-            String providerId,
-            String email
+            String providerId
     ) {
         return new SignupTicketPayload(
                 providerType,
                 providerId,
                 role,
-                email,
                 Instant.now().getEpochSecond()
         );
     }

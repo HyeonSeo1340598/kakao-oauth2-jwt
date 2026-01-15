@@ -1,7 +1,7 @@
 package io.github.hyeonseo.auth.user.domain;
 
-import io.github.hyeonseo.auth.AuthProvider;
-import io.github.hyeonseo.auth.Gender;
+import io.github.hyeonseo.auth.common.types.AuthProvider;
+import io.github.hyeonseo.auth.common.types.Gender;
 
 import jakarta.persistence.*;
 import lombok.*;
