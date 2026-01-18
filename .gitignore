@@ -36,5 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Claude Code Files ###
+.claude/
+CLAUDE.md
+CLAUDE.local.md
 
 src/main/resources/application-local.yml
